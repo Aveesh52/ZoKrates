@@ -28,6 +28,7 @@ pub enum Token<T: Field> {
     Gt,
     And,
     AndAnd,
+    Xor,
     Add,
     Sub,
     Mult,
