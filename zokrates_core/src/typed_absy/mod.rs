@@ -10,7 +10,6 @@ use absy::parameter::Parameter;
 use absy::variable::Variable;
 
 use std::fmt;
-use substitution::Substitution;
 use field::Field;
 use imports::Import;
 use flat_absy::*;
@@ -298,9 +297,11 @@ pub enum BooleanExpression<T: Field> {
     Eq(Box<FieldElementExpression<T>>, Box<FieldElementExpression<T>>),
     Ge(Box<FieldElementExpression<T>>, Box<FieldElementExpression<T>>),
     Gt(Box<FieldElementExpression<T>>, Box<FieldElementExpression<T>>),
-    AndAnd(Box<BooleanExpression<T>>, Box<BooleanExpression<T>>),
+    And(Box<BooleanExpression<T>>, Box<BooleanExpression<T>>),
     Or(Box<BooleanExpression<T>>, Box<BooleanExpression<T>>),
 }
+    
+    
 
 impl<T: Field> BooleanExpression<T> {
     pub fn apply_substitution(self, substitution: &Substitution) -> BooleanExpression<T> {
@@ -455,7 +456,7 @@ impl<T: Field> fmt::Display for BooleanExpression<T> {
             BooleanExpression::Eq(ref lhs, ref rhs) => write!(f, "{} == {}", lhs, rhs),
             BooleanExpression::Ge(ref lhs, ref rhs) => write!(f, "{} >= {}", lhs, rhs),
             BooleanExpression::Gt(ref lhs, ref rhs) => write!(f, "{} > {}", lhs, rhs),
-            BooleanExpression::AndAnd(ref lhs, ref rhs) => write!(f, "{} && {}", lhs, rhs),
+            BooleanExpression::And(ref lhs, ref rhs) => write!(f, "{} && {}", lhs, rhs),
             BooleanExpression::Or(ref lhs, ref rhs) => write!(f, "{} || {}", lhs, rhs),
             BooleanExpression::Value(b) => write!(f, "{}", b),
         }
@@ -490,26 +491,6 @@ impl<T: Field> fmt::Debug for FieldElementExpression<T> {
                 try!(f.debug_list().entries(p.iter()).finish());
                 write!(f, ")")
             },
-        }
-    }
-}
-
-
-impl<T: Field> TypedExpression<T> {
-    pub fn apply_substitution(self, substitution: &Substitution) -> TypedExpression<T> {
-        match self {
-            TypedExpression::Boolean(e) => e.apply_substitution(substitution).into(),
-            TypedExpression::FieldElement(e) => e.apply_substitution(substitution).into(),
-        }
-    }
-}
-
-impl<T: Field> TypedExpressionList<T> {
-    pub fn apply_substitution(self, substitution: &Substitution) -> TypedExpressionList<T> {
-        match self {
-            TypedExpressionList::FunctionCall(id, inputs, types) => {
-                TypedExpressionList::FunctionCall(id, inputs.into_iter().map(|i| i.apply_substitution(substitution)).collect(), types)
-            }
         }
     }
 }
