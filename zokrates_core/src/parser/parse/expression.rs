@@ -48,35 +48,43 @@ fn parse_prim_cond<T: Field>(
     input: &String,
     pos: &Position,
 ) -> Result<(Expression<T>, String, Position), Error<T>> {
-    match parse_expr(input, pos) {
-        Ok((e2, s2, p2)) => match next_token(&s2, &p2) {
-            (Token::Lt, s3, p3) => match parse_expr(&s3, &p3) {
-                Ok((e4, s4, p4)) => Ok((Expression::Lt(box e2, box e4), s4, p4)),
+    match next_token::<T>(input, pos) {
+        (Token::Not, s2, p2) => {
+            match parse_prim_cond(&s2, &p2) {
+                Ok((e3, s3, p3)) => Ok((Expression::Not(box e3), s3, p3)),
                 Err(err) => Err(err),
-            },
-            (Token::Le, s3, p3) => match parse_expr(&s3, &p3) {
-                Ok((e4, s4, p4)) => Ok((Expression::Le(box e2, box e4), s4, p4)),
-                Err(err) => Err(err),
-            },
-            (Token::Eqeq, s3, p3) => match parse_expr(&s3, &p3) {
-                Ok((e4, s4, p4)) => Ok((Expression::Eq(box e2, box e4), s4, p4)),
-                Err(err) => Err(err),
-            },
-            (Token::Ge, s3, p3) => match parse_expr(&s3, &p3) {
-                Ok((e4, s4, p4)) => Ok((Expression::Ge(box e2, box e4), s4, p4)),
-                Err(err) => Err(err),
-            },
-            (Token::Gt, s3, p3) => match parse_expr(&s3, &p3) {
-                Ok((e4, s4, p4)) => Ok((Expression::Gt(box e2, box e4), s4, p4)),
-                Err(err) => Err(err),
-            },
-            (t3, _, p3) => Err(Error {
-                expected: vec![Token::Lt, Token::Le, Token::Eqeq, Token::Ge, Token::Gt],
-                got: t3,
-                pos: p3,
-            }),
+            }
         },
-        Err(err) => Err(err)
+        _ => match parse_expr(input, pos) {
+            Ok((e2, s2, p2)) => match next_token(&s2, &p2) {
+                (Token::Lt, s3, p3) => match parse_expr(&s3, &p3) {
+                    Ok((e4, s4, p4)) => Ok((Expression::Lt(box e2, box e4), s4, p4)),
+                    Err(err) => Err(err),
+                },
+                (Token::Le, s3, p3) => match parse_expr(&s3, &p3) {
+                    Ok((e4, s4, p4)) => Ok((Expression::Le(box e2, box e4), s4, p4)),
+                    Err(err) => Err(err),
+                },
+                (Token::Eqeq, s3, p3) => match parse_expr(&s3, &p3) {
+                    Ok((e4, s4, p4)) => Ok((Expression::Eq(box e2, box e4), s4, p4)),
+                    Err(err) => Err(err),
+                },
+                (Token::Ge, s3, p3) => match parse_expr(&s3, &p3) {
+                    Ok((e4, s4, p4)) => Ok((Expression::Ge(box e2, box e4), s4, p4)),
+                    Err(err) => Err(err),
+                },
+                (Token::Gt, s3, p3) => match parse_expr(&s3, &p3) {
+                    Ok((e4, s4, p4)) => Ok((Expression::Gt(box e2, box e4), s4, p4)),
+                    Err(err) => Err(err),
+                },
+                (t3, _, p3) => Err(Error {
+                    expected: vec![Token::Lt, Token::Le, Token::Eqeq, Token::Ge, Token::Gt],
+                    got: t3,
+                    pos: p3,
+                }),
+            },
+            Err(err) => Err(err)
+        },
     }
 }
 
@@ -336,6 +344,54 @@ mod tests {
             box Expression::Identifier(String::from("c")),
             box Expression::Identifier(String::from("d")),
         );
+        assert_eq!(
+            Ok((expr, String::from(""), pos.col(string.len() as isize))),
+            parse_if_then_else(&string, &pos)
+        );
+    }
+
+    #[test]
+    fn parse_boolean_not() {
+        let pos = Position{line: 45, col: 121};
+        let string = String::from("if !a < b then c else d fi");
+
+        let expr = Expression::IfElse::<FieldPrime>(
+            box Expression::Not(
+                box Expression::Lt(
+                    box Expression::Identifier(String::from("a")),
+                    box Expression::Identifier(String::from("b")),
+                ),
+            ),
+            box Expression::Identifier(String::from("c")),
+            box Expression::Identifier(String::from("d")),
+        );
+
+        assert_eq!(
+            Ok((expr, String::from(""), pos.col(string.len() as isize))),
+            parse_if_then_else(&string, &pos)
+        );
+    }
+
+    #[test]
+    fn parse_nested_boolean_nots() {
+        let pos = Position{line: 45, col: 121};
+        let string = String::from("if !!!a < b then c else d fi");
+
+        let expr = Expression::IfElse::<FieldPrime>(
+            box Expression::Not(
+                box Expression::Not(
+                    box Expression::Not(
+                        box Expression::Lt(
+                            box Expression::Identifier(String::from("a")),
+                            box Expression::Identifier(String::from("b")),
+                        ),
+                    ),
+                ),
+            ),
+            box Expression::Identifier(String::from("c")),
+            box Expression::Identifier(String::from("d")),
+        );
+
         assert_eq!(
             Ok((expr, String::from(""), pos.col(string.len() as isize))),
             parse_if_then_else(&string, &pos)
