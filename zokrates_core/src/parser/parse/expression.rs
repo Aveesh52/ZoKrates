@@ -90,6 +90,10 @@ fn parse_condition<T: Field>(
             Ok((e2, s2, p2)) => parse_condition(Expression::AndAnd(box cond, box e2), &s2, &p2),
             Err(err) => Err(err),
         },
+        (Token::Or, s1, p1) => match parse_prim_cond(&s1, &p1) {
+            Ok((e2, s2, p2)) => parse_condition(Expression::Or(box cond, box e2), &s2, &p2),
+            Err(err) => Err(err),
+        },
         (Token::Then, _, _) => parse_then_else(cond, input, pos),
         (t1, _, p1) => Err(Error {
             expected: vec![Token::AndAnd, Token::Then],
