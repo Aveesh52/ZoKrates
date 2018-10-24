@@ -492,6 +492,15 @@ impl Flattener {
         match expr {
             FieldElementExpression::Number(x) => FlatExpression::Number(x), // force to be a field element
             FieldElementExpression::Identifier(x) => FlatExpression::Identifier(self.bijection.get_by_left(&x).unwrap().clone()),
+            FieldElementExpression::Assert(x) => {
+                let x_flattened = self.flatten_boolean_expression(
+                    functions_flattened,
+                    arguments_flattened,
+                    statements_flattened,
+                    x,
+                );
+                FlatExpression::Assert(x_flattened)
+            },  
             FieldElementExpression::Add(box left, box right) => {
                 let left_flattened = self.flatten_field_expression(
                     functions_flattened,
