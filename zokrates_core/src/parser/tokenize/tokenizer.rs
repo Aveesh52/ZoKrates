@@ -57,6 +57,7 @@ pub fn parse_ide<T: Field>(input: &String, pos: &Position) -> (Token<T>, String,
         "return" => Token::Return,
         "field" => Token::Type(Type::FieldElement),
         "bool" => Token::Type(Type::Boolean),
+        "assert" => Token::Assert,
         _ => Token::Ide(input[0..end].to_string()),
     };
 
@@ -200,6 +201,28 @@ pub fn next_token<T: Field>(input: &String, pos: &Position) -> (Token<T>, String
                     col: pos.col + offset + 1,
                 },
             ),
+        },
+        Some('&') => match input.chars().nth(offset + 1) {
+            Some('&') => (
+                Token::AndAnd,
+                input[offset + 2..].to_string(),
+                Position {
+                    line: pos.line,
+                    col: pos.col + offset + 2,
+                },
+            ),
+            _ => panic!("Bitwise AND (&) is unimplemented. Did you mean &&?"),
+        },
+        Some('|') => match input.chars().nth(offset + 1) {
+            Some('|') => (
+                Token::Or,
+                input[offset + 2..].to_string(),
+                Position {
+                    line: pos.line,
+                    col: pos.col + offset + 2
+                },
+            ),
+            _ => panic!("| should not appear alone"),
         },
         Some('+') => (
             Token::Add,
