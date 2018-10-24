@@ -57,6 +57,7 @@ pub fn parse_ide<T: Field>(input: &String, pos: &Position) -> (Token<T>, String,
         "return" => Token::Return,
         "field" => Token::Type(Type::FieldElement),
         "bool" => Token::Type(Type::Boolean),
+        "assert" => Token::Assert,
         _ => Token::Ide(input[0..end].to_string()),
     };
 

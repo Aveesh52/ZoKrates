@@ -78,6 +78,7 @@ impl<T: Field> fmt::Display for Token<T> {
             Token::And => write!(f, "&"),
             Token::AndAnd => write!(f, "&&"),
             Token::Or => write!(f, "||"),
+            Token::Assert => write!(f, "assert"),
             Token::Add => write!(f, "+"),
             Token::Sub => write!(f, "-"),
             Token::Mult => write!(f, "*"),
