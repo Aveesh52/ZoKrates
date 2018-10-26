@@ -260,7 +260,8 @@ pub enum FlatExpression<T: Field> {
     Add(Box<FlatExpression<T>>, Box<FlatExpression<T>>),
     Sub(Box<FlatExpression<T>>, Box<FlatExpression<T>>),
     Div(Box<FlatExpression<T>>, Box<FlatExpression<T>>),
-    Mult(Box<FlatExpression<T>>, Box<FlatExpression<T>>)
+    Mult(Box<FlatExpression<T>>, Box<FlatExpression<T>>),
+    Assert(Box<FlatExpression<T>>)
 }
 
 impl<T: Field> FlatExpression<T> {

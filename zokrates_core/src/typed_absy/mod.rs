@@ -286,6 +286,7 @@ pub enum FieldElementExpression<T: Field> {
     Pow(Box<FieldElementExpression<T>>, Box<FieldElementExpression<T>>),
     IfElse(Box<BooleanExpression<T>>, Box<FieldElementExpression<T>>, Box<FieldElementExpression<T>>),
     FunctionCall(String, Vec<TypedExpression<T>>),
+    Assert(Box<BooleanExpression<T>>)
 }
 
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
