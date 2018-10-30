@@ -55,4 +55,8 @@ fn main() {
             println!("cargo:rustc-link-lib=static=ff");
         }
     }
+    #[cfg(feature = "parser_gen")]{
+        extern crate lalrpop;
+        lalrpop::process_root().unwrap();
+    }
 }
