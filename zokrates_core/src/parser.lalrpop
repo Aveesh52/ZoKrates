@@ -3,8 +3,8 @@ use field::Field;
 
 grammar<T> where T : Field;
 
-Num: Expression = <n:r"[0-9]+"> => Expression::Number(T::from(n));
-Ide: Expression = <s:r"[a-zA-Z][a-zA-Z0-9]*"> => Expression::Identifier(s.to_string());
+Num: Expression<T> = <n:r"[0-9]+"> => Expression::Number::<T>(T::from(n));
+Ide: Expression<T> = <s:r"[a-zA-Z][a-zA-Z0-9]*"> => Expression::Identifier::<T>(s.to_string());
 
 Factor = {
     Num,
@@ -19,7 +19,7 @@ Term = {
     Factor
 }
 
-pub Expr = {
+pub Expr : Expression<T> = {
     <a:Term>"+"<b:Expr> => Expression::Add(box a, box b),
     <a:Term>"-"<b:Expr> => Expression::Sub(box a, box b),
     Term
