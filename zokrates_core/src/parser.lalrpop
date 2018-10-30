@@ -3,6 +3,17 @@ use field::Field;
 
 grammar<T> where T : Field;
 
+CommaList<E> : Vec<E> = <v:(<E> ",")*> <e:E?> => {
+    match e { // (2)
+        None => v,
+        Some(e) => {
+            let mut v = v;
+            v.push(e);
+            v
+        }
+    }
+};
+
 Num: Expression<T> = <n:r"[0-9]+"> => Expression::Number::<T>(T::from(n));
 Ide: Expression<T> = <s:r"[a-zA-Z][a-zA-Z0-9]*"> => Expression::Identifier::<T>(s.to_string());
 
@@ -20,7 +31,7 @@ Term = {
 }
 
 Condition : Expression<T>= {
-    <a:Expr>"=="<b:Expr> => Expression::Eqeq(box a, box b),
+    <a:Expr>"=="<b:Expr> => Expression::Eq(box a, box b),
     <a:Expr>"<"<b:Expr> => Expression::Lt(box a, box b),
     <a:Expr>"<="<b:Expr> => Expression::Le(box a, box b),
     <a:Expr>">"<b:Expr> => Expression::Gt(box a, box b),
@@ -29,7 +40,7 @@ Condition : Expression<T>= {
 }
 
 BoolTerm : Expression<T> = {
-    <c:Condition> "&&" <b:BoolTerm> => Expression::And(box c, box b),
+    <c:Condition> "&&" <b:BoolTerm> => Expression::AndAnd(box c, box b),
     <Condition>
 }
 
@@ -40,7 +51,7 @@ BoolExpr : Expression<T> = {
 
 IfElse: Expression<T>  = "if" <a:BoolExpr> "then" <b:Expr> "else" <c:Expr> => Expression::IfElse(box a, box b, box c);
 
-FunctionCall : Expression<T> = <f:Ide> "(" <args:((<Expr> ",")*<Expr>)> ")" => Expression::FunctionCall(f, args);
+FunctionCall : Expression<T> = <f:r"[a-zA-Z][a-zA-Z0-9]*"> "(" <args:CommaList<Expr>> ")" => Expression::FunctionCall(f.to_string(), args);
 
 pub Expr : Expression<T> = {
     <a:Term>"+"<b:Expr> => Expression::Add(box a, box b),
