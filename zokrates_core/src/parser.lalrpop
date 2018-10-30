@@ -19,8 +19,33 @@ Term = {
     Factor
 }
 
+Condition : Expression<T>= {
+    <a:Expr>"=="<b:Expr> => Expression::Eqeq(box a, box b),
+    <a:Expr>"<"<b:Expr> => Expression::Lt(box a, box b),
+    <a:Expr>"<="<b:Expr> => Expression::Le(box a, box b),
+    <a:Expr>">"<b:Expr> => Expression::Gt(box a, box b),
+    <a:Expr>">="<b:Expr> => Expression::Ge(box a, box b),
+    "(" <BoolExpr> ")"
+}
+
+BoolTerm : Expression<T> = {
+    <c:Condition> "&&" <b:BoolTerm> => Expression::And(box c, box b),
+    <Condition>
+}
+
+BoolExpr : Expression<T> = {
+    <t:BoolTerm> "||" <e:BoolExpr> => Expression::Or(box t, box e),
+    <BoolTerm>
+}
+
+IfElse: Expression<T>  = "if" <a:BoolExpr> "then" <b:Expr> "else" <c:Expr> => Expression::IfElse(box a, box b, box c);
+
+FunctionCall : Expression<T> = <f:Ide> "(" <args:((<Expr> ",")*<Expr>)> ")" => Expression::FunctionCall(f, args);
+
 pub Expr : Expression<T> = {
     <a:Term>"+"<b:Expr> => Expression::Add(box a, box b),
     <a:Term>"-"<b:Expr> => Expression::Sub(box a, box b),
+    FunctionCall,
+    IfElse,
     Term
 }
