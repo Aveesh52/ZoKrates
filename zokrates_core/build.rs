@@ -1,7 +1,6 @@
 fn main() {
     extern crate lalrpop;
     println!("compiling parser");
-    println!("TEST1!");
 
     lalrpop::Configuration::new()
         .process_current_dir()

@@ -1,9 +1,11 @@
-use absy::Expression;
+use absy::{Expression, Statement, Variable, ExpressionList};
 use field::Field;
+use types::Type;
+
 
 grammar<T> where T : Field;
 
-CommaList<E> : Vec<E> = <v:(<E> ",")*> <e:E?> => {
+SepList<E, S> : Vec<E> = <v:(<E> S)*> <e:E?> => {
     match e { // (2)
         None => v,
         Some(e) => {
@@ -14,14 +16,20 @@ CommaList<E> : Vec<E> = <v:(<E> ",")*> <e:E?> => {
     }
 };
 
-Num: Expression<T> = <n:r"[0-9]+"> => Expression::Number::<T>(T::from(n));
-Ide: Expression<T> = <s:r"[a-zA-Z][a-zA-Z0-9]*"> => Expression::Identifier::<T>(s.to_string());
+Comma = ",";
+Semicolon = ";";
+
+Ide : String = <s:r"[a-zA-Z][a-zA-Z0-9]*"> => s.to_string();
+Num : T  = <n:r"[0-9]+"> => T::from(n);
+
+Identifier : Expression<T> = <Ide> => Expression::Identifier::<T>(<>);
+Number : Expression<T> = <Num> => Expression::Number(<>);
 
 Factor = {
-    Num,
-    Ide,
+    Number,
+    Identifier,
     "(" <Expr> ")",
-    <a:Factor>"**"<b:Num> => Expression::Pow(box a, box b)
+    <a:Factor>"**"<b:Number> => Expression::Pow(box a, box b)
 }
 
 Term = {
@@ -51,7 +59,7 @@ BoolExpr : Expression<T> = {
 
 IfElse: Expression<T>  = "if" <a:BoolExpr> "then" <b:Expr> "else" <c:Expr> => Expression::IfElse(box a, box b, box c);
 
-FunctionCall : Expression<T> = <f:r"[a-zA-Z][a-zA-Z0-9]*"> "(" <args:CommaList<Expr>> ")" => Expression::FunctionCall(f.to_string(), args);
+FunctionCall : Expression<T> = <f:r"[a-zA-Z][a-zA-Z0-9]*"> "(" <args:SepList<Expr, Comma>> ")" => Expression::FunctionCall(f.to_string(), args);
 
 pub Expr : Expression<T> = {
     <a:Term>"+"<b:Expr> => Expression::Add(box a, box b),
@@ -60,3 +68,30 @@ pub Expr : Expression<T> = {
     IfElse,
     Term
 }
+
+Type : Type = {
+     "field" => Type::FieldElement,
+     "bool" => Type::Boolean
+}
+
+Definition : Vec<Statement<T>> = <x:Ide> "=" <e:Expr> => vec![Statement::Definition(x, e)];
+
+Declaration : Vec<Statement<T>> = <t:Type> <x:Ide> "=" <e:Expr> => vec![Statement::Declaration(Variable::new(x.clone(), t)), Statement::Definition(x, e)];
+
+ForLoop : Vec<Statement<T>> = "for" <t:Type> <i:Ide> "in" <n1:Num> ".." <n2:Num> "do" <s:SepList<NonReturnStatement, Semicolon>> "endfor" =>
+        vec![Statement::For(Variable::new(i, t), n1, n2, s.into_iter().flatten().collect())];
+
+
+NonReturnStatement : Vec<Statement<T>> = {
+   <Expr> "==" <Expr> => vec![Statement::Condition(<>)],
+   Definition,
+   Declaration,
+   ForLoop,
+   <NonReturnStatement> r"//.*"
+}
+
+ExpressionList : ExpressionList<T> = SepList<Expr, Comma> => ExpressionList{expressions: <>} ;
+
+Return : Vec<Statement<T>> = "return" <ExpressionList> => vec![Statement::Return(<>)];
+
+pub Statement = {NonReturnStatement, Return}

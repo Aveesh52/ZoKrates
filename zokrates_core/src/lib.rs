@@ -1,4 +1,4 @@
-#![feature(box_patterns, box_syntax)]
+#![feature(box_patterns, box_syntax, iterator_flatten)]
 
 #[macro_use]
 extern crate lazy_static;
