@@ -1,11 +1,19 @@
 fn main() {
+    extern crate lalrpop;
+    println!("compiling parser");
+    println!("TEST1!");
+
+    lalrpop::Configuration::new()
+        .process_current_dir()
+        .unwrap();
+
     #[cfg(feature = "libsnark")]
     {
         extern crate gcc;
         extern crate cmake;
         use std::path::Path;
         use std::env;
-        
+
         let libsnark_source_path_string = env::var_os("LIBSNARK_SOURCE_PATH").expect("$LIBSNARK_SOURCE_PATH not set");
         let libsnark_source_path = Path::new(&libsnark_source_path_string);
 
@@ -55,8 +63,10 @@ fn main() {
             println!("cargo:rustc-link-lib=static=ff");
         }
     }
-    #[cfg(feature = "parser_gen")]{
+    #[cfg(feature = "parsergen")]{
         extern crate lalrpop;
+        println!("compiling parser");
+        println!("TEST!");
         lalrpop::process_root().unwrap();
     }
 }

@@ -1,0 +1,26 @@
+use absy::Expression;
+use field::Field;
+
+grammar<T> where T : Field;
+
+Num: Expression = <n:r"[0-9]+"> => Expression::Number(T::from(n));
+Ide: Expression = <s:r"[a-zA-Z][a-zA-Z0-9]*"> => Expression::Identifier(s.to_string());
+
+Factor = {
+    Num,
+    Ide,
+    "(" <Expr> ")",
+    <a:Factor>"**"<b:Num> => Expression::Pow(box a, box b)
+}
+
+Term = {
+    <a:Factor>"*"<b:Term> => Expression::Mult(box a, box b),
+    <a:Factor>"/"<b:Term> => Expression::Div(box a, box b),
+    Factor
+}
+
+pub Expr = {
+    <a:Term>"+"<b:Expr> => Expression::Add(box a, box b),
+    <a:Term>"-"<b:Expr> => Expression::Sub(box a, box b),
+    Term
+}

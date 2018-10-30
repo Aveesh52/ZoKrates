@@ -13,6 +13,10 @@ extern crate bincode;
 extern crate regex;
 extern crate bimap;
 
+#[macro_use]
+extern crate lalrpop_util;
+
+
 mod parser;
 mod imports;
 mod semantics;

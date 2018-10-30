@@ -9,6 +9,7 @@ build = "build.rs"
 [features]
 default = []
 libsnark = []
+parsergen = []
 
 [dependencies]
 libc = "0.2.0"
