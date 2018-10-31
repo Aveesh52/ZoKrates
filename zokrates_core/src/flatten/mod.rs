@@ -1547,6 +1547,11 @@ mod tests {
     }
 
     #[test]
+    fn assert_test(){
+        
+    }
+
+    #[test]
     fn next_variable() {
         let mut flattener = Flattener::new(FieldPrime::get_required_bits());
         assert_eq!(FlatVariable::new(0), flattener.use_variable(&String::from("a")));
