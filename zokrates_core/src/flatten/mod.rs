@@ -1548,7 +1548,25 @@ mod tests {
 
     #[test]
     fn assert_test(){
+        let expression = 
+            FieldElementExpression::Assert(
+                box BooleanExpression::Eq(
+                    box FieldElementExpression::Number(FieldPrime::from(4)),
+                    box FieldElementExpression::Number(FieldPrime::from(4))
+                )
+            );
         
+        let mut functions_flattened = vec![];
+        let mut flattener = Flattener::new(FieldPrime::get_required_bits());
+
+        flattener.load_stdlib(&mut functions_flattened);
+
+        flattener.flatten_field_expression(
+            &functions_flattened,
+            &vec![],
+            &mut vec![],
+            expression
+        );
     }
 
     #[test]
