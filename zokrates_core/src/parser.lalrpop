@@ -1,6 +1,7 @@
-use absy::{Expression, Statement, Variable, ExpressionList, Parameter, Function};
+use absy::{Expression, Statement, Variable, ExpressionList, Parameter, Function, Prog};
 use field::Field;
 use types::{Type, Signature};
+use imports::Import;
 
 grammar<T> where T : Field;
 
@@ -100,3 +101,7 @@ FunctionHeader : (String, Vec<Parameter>, Signature) =
 
 pub Function : Function<T> = <h:FunctionHeader> <s:SepList<Statement, ";">> <r:Return> =>
          {let (id, args, sig) = h; s.push(r); Function{id: id, arguments: args, statements: s.into_iter().flatten().collect(), signature: sig}};
+
+Import : Import = "import" <p:r#""([\w\\/]*)""#> "as" <i:Ide> => Import::new_with_alias(p.to_string(), &i.to_string());
+
+pub Program : Prog<T> = <imports:Import*> <functions:Function*> => Prog{functions, imports, imported_functions: vec![]};
