@@ -409,6 +409,22 @@ mod tests {
         );
     }
 
+    #[test] // TODO: implement this when parsing is ready
+    fn parse_boolean_assert() {
+        // let pos = Position{line: 45, col: 121};
+        // let string = String::from("assert 2 < 4");
+
+        // let expr = Expression::Assert::<FieldPrime>(
+
+        // );
+
+        // assert_eq!(
+        //     Ok((expr, String::from(""), pos.col(string.len() as isize))),
+        //     parse_if_then_else(&string, &pos)
+        // );
+        ()
+    }
+
     mod parse_factor {
         use super::*;
         #[test]
