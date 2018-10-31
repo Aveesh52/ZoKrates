@@ -49,6 +49,7 @@ pub enum Token<T: Field> {
     // types
     Type(Type),
     Arrow,
+    Assert,
 }
 impl<T: Field> fmt::Display for Token<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

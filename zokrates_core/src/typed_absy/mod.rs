@@ -126,6 +126,7 @@ pub enum TypedStatement<T: Field> {
     Condition(TypedExpression<T>, TypedExpression<T>),
     For(Variable, T, T, Vec<TypedStatement<T>>),
     MultipleDefinition(Vec<Variable>, TypedExpressionList<T>),
+    Assert(TypedExpression<T>),
 }
 
 impl<T: Field> fmt::Debug for TypedStatement<T> {

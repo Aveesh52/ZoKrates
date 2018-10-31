@@ -918,7 +918,7 @@ impl Flattener {
             TypedStatement::Assert(expr) => {
                 match expr {
                     Boolean(e1) => {
-                        flat_e1 = self.flatten_boolean_expression(
+                        let flat_e1 = self.flatten_boolean_expression(
                             functions_flattened,
                             arguments_flattened,
                             statements_flattened,

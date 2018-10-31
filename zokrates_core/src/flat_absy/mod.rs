@@ -188,7 +188,8 @@ pub enum FlatStatement<T: Field> {
     Return(FlatExpressionList<T>),
     Condition(FlatExpression<T>, FlatExpression<T>),
     Definition(FlatVariable, FlatExpression<T>),
-    Directive(DirectiveStatement)
+    Directive(DirectiveStatement),
+    Assert(FlatExpression<T>),
 }
 
 impl<T: Field> fmt::Display for FlatStatement<T> {
