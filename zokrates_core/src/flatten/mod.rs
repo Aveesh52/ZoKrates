@@ -379,7 +379,7 @@ impl Flattener {
 
                 FlatExpression::Identifier(name_x_and_y)
             },
-            BooleanExpression::Or(box lhs, boxrhs) => {
+            BooleanExpression::Or(box lhs, box rhs) => {
               let x = self.flatten_boolean_expression(
                     functions_flattened,
                     arguments_flattened,
@@ -536,16 +536,7 @@ impl Flattener {
     ) -> FlatExpression<T> {
         match expr {
             FieldElementExpression::Number(x) => FlatExpression::Number(x), // force to be a field element
-            FieldElementExpression::Identifier(x) => FlatExpression::Identifier(self.bijection.get_by_left(&x).unwrap().clone()),
-            FieldElementExpression::Assert(box x) => {
-                let x_flattened = self.flatten_boolean_expression(
-                    functions_flattened,
-                    arguments_flattened,
-                    statements_flattened,
-                    x,
-                );
-                FlatExpression::Assert(box x_flattened)
-            },  
+            FieldElementExpression::Identifier(x) => FlatExpression::Identifier(self.bijection.get_by_left(&x).unwrap().clone()),  
             FieldElementExpression::Add(box left, box right) => {
                 let left_flattened = self.flatten_field_expression(
                     functions_flattened,
@@ -922,6 +913,20 @@ impl Flattener {
                             statements_flattened.push(FlatStatement::Definition(var, rhs_flattened.expressions[i].clone()));
                         }
                     },
+                }
+            },
+            TypedStatement::Assert(expr) => {
+                match expr {
+                    Boolean(e1) => {
+                        flat_e1 = self.flatten_boolean_expression(
+                            functions_flattened,
+                            arguments_flattened,
+                            statements_flattened,
+                            e1
+                            ).apply_recursive_substitution(&self.substitution);
+                        statements_flattened.push(FlatStatement::Assert(flat_e1));
+                    }
+                    _ => panic!("Can only assert boolean expressions")
                 }
             },
         }
