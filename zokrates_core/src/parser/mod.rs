@@ -6,8 +6,8 @@ pub use parser::error::Error;
 pub use parser::parse::parse_program;
 use field::FieldPrime;
 
-lalrpop_mod!(parser, "/src//parser/test.rs");
-/*
+lalrpop_mod!(parser, "/src//parser/parser.rs");
+
 #[test]
 fn test_parsergen() {
     let expr = parser::ExprParser::new()
@@ -15,4 +15,4 @@ fn test_parsergen() {
         .unwrap();
     //assert_eq!(&format!("{:?}", expr), "((22 * 44) + 66)");
 }
-*/
+
