@@ -5,7 +5,23 @@ use imports::Import;
 
 grammar<T> where T : Field;
 
-SepList<E, S> : Vec<E> = <v:(<E> S)*> <e:E?> => {
+Opt<E> : Option<E> = {
+"" => None,
+E => Some(<>)
+}
+
+Star<E> : Vec<E> = {
+<v: Star<E>> <e: E> => {v.push(e); v},
+"" => vec![]
+}
+
+Plus<E> : Vec<E> = {
+  <v: Star<E>> <e: E> => {v.push(e); v},
+  E => vec![<>]
+}
+
+
+SepList<E, S> : Vec<E> = <v:Star<(<E> S)>> <e:Opt<E>> => {
     match e { // (2)
         None => v,
         Some(e) => {
@@ -56,7 +72,7 @@ BoolExpr : Expression<T> = {
 
 IfElse: Expression<T>  = "if" <a:BoolExpr> "then" <b:Expr> "else" <c:Expr> "fi" => Expression::IfElse(box a, box b, box c);
 
-FunctionCall : Expression<T> = <f:r"[a-zA-Z][a-zA-Z0-9]*"> "(" <args:SepList<Expr, ",">> ")" => Expression::FunctionCall(f.to_string(), args);
+FunctionCall : Expression<T> = <f:Ide> "(" <args:SepList<Expr, ",">> ")" => Expression::FunctionCall(f, args);
 
 pub Expr : Expression<T> = {
     <a:Expr>"+"<b:Term> => Expression::Add(box a, box b),
@@ -104,4 +120,4 @@ pub Function : Function<T> = <h:FunctionHeader> <s:SepList<Statement, ";">> <r:R
 
 Import : Import = "import" <p:r#""([\w\\/]*)""#> "as" <i:Ide> => Import::new_with_alias(p.to_string(), &i.to_string());
 
-pub Program : Prog<T> = <imports:Import*> <functions:Function*> => Prog{functions, imports, imported_functions: vec![]};
+pub Program : Prog<T> = <imports:Star<Import>> <functions:Function*> => Prog{functions, imports, imported_functions: vec![]};
