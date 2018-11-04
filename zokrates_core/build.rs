@@ -1,9 +1,11 @@
+use std::path::Path;
+
 fn main() {
     extern crate lalrpop;
     println!("compiling parser");
 
     lalrpop::Configuration::new()
-        .process_current_dir()
+        .process_dir(Path::new("src/parser"))
         .unwrap();
 
     #[cfg(feature = "libsnark")]
@@ -61,11 +63,5 @@ fn main() {
             println!("cargo:rustc-link-lib=static=snark");
             println!("cargo:rustc-link-lib=static=ff");
         }
-    }
-    #[cfg(feature = "parsergen")]{
-        extern crate lalrpop;
-        println!("compiling parser");
-        println!("TEST!");
-        lalrpop::process_root().unwrap();
     }
 }
