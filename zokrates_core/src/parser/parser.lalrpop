@@ -5,23 +5,24 @@ use imports::Import;
 
 grammar<T> where T : Field;
 
+Cat<E1, E2> = <E1> E2;
+
 Opt<E> : Option<E> = {
 "" => None,
 E => Some(<>)
 }
 
 Star<E> : Vec<E> = {
-<v: Star<E>> <e: E> => {v.push(e); v},
+<v: Star<E>> <e: E> => {let mut v = v; v.push(e); v},
 "" => vec![]
 }
 
 Plus<E> : Vec<E> = {
-  <v: Star<E>> <e: E> => {v.push(e); v},
+  <v: Star<E>> <e: E> => { let mut v = v; v.push(e); v},
   E => vec![<>]
 }
 
-
-SepList<E, S> : Vec<E> = <v:Star<(<E> S)>> <e:Opt<E>> => {
+SepList<E, S> : Vec<E> = <v:Star<Cat<E,S>>> <e:Opt<E>> => {
     match e { // (2)
         None => v,
         Some(e) => {
@@ -113,11 +114,11 @@ FunctionArg : Parameter = "private" <t:Type> <x:Ide> => Parameter{id : Variable:
 
 FunctionHeader : (String, Vec<Parameter>, Signature) =
                "def" <f:Ide> "(" <args:SepList<FunctionArg, ",">> ")" "->" "(" <rets:SepList<Type, ",">> ")"
-               => (f, args, Signature{inputs : args.into_iter().map(|a| a.id.get_type()).collect(), outputs: rets});
+               => (f, args.clone(), Signature{inputs : args.into_iter().map(|a| a.id.get_type()).collect(), outputs: rets});
 
 pub Function : Function<T> = <h:FunctionHeader> <s:SepList<Statement, ";">> <r:Return> =>
-         {let (id, args, sig) = h; s.push(r); Function{id: id, arguments: args, statements: s.into_iter().flatten().collect(), signature: sig}};
+         {let (id, args, sig) = h; let mut s = s; s.push(r); Function{id: id, arguments: args, statements: s.into_iter().flatten().collect(), signature: sig}};
 
 Import : Import = "import" <p:r#""([\w\\/]*)""#> "as" <i:Ide> => Import::new_with_alias(p.to_string(), &i.to_string());
 
-pub Program : Prog<T> = <imports:Star<Import>> <functions:Function*> => Prog{functions, imports, imported_functions: vec![]};
+pub Program : Prog<T> = <imports:Star<Import>> <functions:Star<Function>> => Prog{functions, imports, imported_functions: vec![]};

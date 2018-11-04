@@ -6,7 +6,7 @@ pub use parser::error::Error;
 pub use parser::parse::parse_program;
 use field::FieldPrime;
 
-lalrpop_mod!(parser, "/src//parser/parser.rs");
+lalrpop_mod!(parser, "/src/parser/parser.rs");
 
 #[test]
 fn test_parsergen() {
