@@ -25,7 +25,7 @@ Plus<E> : Vec<E> = {
 }
 
 SepList<E, S> : Vec<E> = <v:Star<Cat<E,S>>> <e:Opt<E>> => {
-    match e { // (2)
+    match e {
         None => v,
         Some(e) => {
             let mut v = v;
@@ -132,7 +132,7 @@ FunctionHeader : (String, Vec<Parameter>, Signature) = "def" <f:Ide> "(" <args:S
                                                        "->" "(" <rets:SepList<Type, ",">> ")"
  => (f, args.clone(), Signature{inputs : args.into_iter().map(|a| a.id.get_type()).collect(), outputs: rets});
 
-pub Function : Function<T> = <h:FunctionHeader> <s:SepList<Statement, ";">> <r:Return>
+Function : Function<T> = <h:FunctionHeader> <s:SepList<Statement, ";">> <r:Return>
                            => {let (id, args, sig) = h;
                                let mut s = s;
                                s.push(r);
@@ -144,8 +144,13 @@ pub Function : Function<T> = <h:FunctionHeader> <s:SepList<Statement, ";">> <r:R
 
 // Program grammar
 
-Import : Import = "import" <p:r#""([\w\\/]*)""#> "as" <i:Ide>
-                => Import::new_with_alias(p.to_string(), &i.to_string());
+As : String = "as" <Ide>;
+
+Import : Import = "import" <p:r#""([\.\w/]*)""#> <i:Opt<As>>
+                => match i {
+                            None => Import::new(p.to_string()),
+                            Some(alias) => Import::new_with_alias(p.to_string(), &alias)
+                            };
 
 pub Program : Prog<T> = <imports:Star<Import>> <functions:Star<Function>>
                       => Prog{functions, imports, imported_functions: vec![]};
