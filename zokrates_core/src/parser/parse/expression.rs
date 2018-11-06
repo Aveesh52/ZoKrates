@@ -531,6 +531,35 @@ mod tests {
         );
     }
 
+    #[test]
+    fn parse_boolean_and2() {
+        let pos = Position{line: 45, col: 121};
+        let string = String::from("if a*b > b  && a<b then c else d fi");
+
+        let expr = Expression::IfElse::<FieldPrime>(
+            box Expression::And(
+                box Expression::Gt(
+                    box Expression::Mult(
+                        box Expression::Identifier(String::from("a")),
+                        box Expression::Identifier(String::from("b")),
+                    ),
+                    box Expression::Identifier(String::from("b")),
+                ),
+                box Expression::Lt(
+                    box Expression::Identifier(String::from("a")),
+                    box Expression::Identifier(String::from("b")),
+                ),
+            ),
+            box Expression::Identifier(String::from("c")),
+            box Expression::Identifier(String::from("d")),
+        );
+
+        assert_eq!(
+            Ok((expr, String::from(""), pos.col(string.len() as isize))),
+            parse_if_then_else(&string, &pos)
+        );
+    }
+
     mod array_select {
         use super::*;
 
@@ -589,6 +618,60 @@ mod tests {
             parse_if_then_else(&string, &pos)
         );
     }
+
+    #[test]
+    fn parse_boolean_or2(){
+        let pos = Position{line: 45, col: 121};
+        let string = String::from("if a<b || b>c || a*b>c then d else f fi");
+
+        let expr = Expression::IfElse::<FieldPrime>(
+            box Expression::Or(
+                box Expression::Lt(
+                    box Expression::Identifier(String::from("a")),
+                    box Expression::Identifier(String::from("b")),
+                ),
+                box Expression::Or(
+                    box Expression::Gt(
+                        box Expression::Identifier(String::from("b")),
+                        box Expression::Identifier(String::from("c")),
+                    ),
+                    box Expression::Gt(
+                        box Expression::Mult(
+                            box Expression::Identifier(String::from("a")),
+                            box Expression::Identifier(String::from("b")),
+                        ),
+                        box Expression::Identifier(String::from("c")),
+                    ),
+                ),
+            ),
+            box Expression::Identifier(String::from("d")),
+            box Expression::Identifier(String::from("f")),
+        );
+        assert_eq!(
+            Ok((expr, String::from(""), pos.col(string.len() as isize))),
+            parse_if_then_else(&string, &pos)
+        );
+    }
+
+    #[test]
+    fn parse_boolean_or3(){
+        let pos = Position{line: 45, col: 121};
+        let string = String::from("if a || b then c else d fi");
+
+        let expr = Expression::IfElse::<FieldPrime>(
+            box Expression::Or(
+                box Expression::Identifier(String::from("a")),
+                box Expression::Identifier(String::from("b")),
+            ),
+            box Expression::Identifier(String::from("c")),
+            box Expression::Identifier(String::from("d")),
+        );
+        assert_eq!(
+            Ok((expr, String::from(""), pos.col(string.len() as isize))),
+            parse_if_then_else(&string, &pos)
+        );
+    }
+
 
     #[test]
     fn parse_boolean_operator_associativity(){
