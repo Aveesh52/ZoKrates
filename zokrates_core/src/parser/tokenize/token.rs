@@ -27,9 +27,9 @@ pub enum Token<T: Field> {
     Ge,
     Gt,
     And,
-    AndAnd,
     Or,
     Add,
+    Not,
     Sub,
     Mult,
     Div,
@@ -43,6 +43,8 @@ pub enum Token<T: Field> {
     DoubleQuote,
     Path(String),
     As,
+    LeftBracket,
+    RightBracket,
     // following used for error messages
     ErrIde,
     ErrNum,
@@ -76,8 +78,8 @@ impl<T: Field> fmt::Display for Token<T> {
             Token::Eqeq => write!(f, "=="),
             Token::Ge => write!(f, ">="),
             Token::Gt => write!(f, ">"),
-            Token::And => write!(f, "&"),
-            Token::AndAnd => write!(f, "&&"),
+            Token::And => write!(f, "&&"),
+            Token::Not => write!(f, "!"),
             Token::Or => write!(f, "||"),
             Token::Assert => write!(f, "assert"),
             Token::Add => write!(f, "+"),
@@ -98,6 +100,8 @@ impl<T: Field> fmt::Display for Token<T> {
             Token::ErrNum => write!(f, "number"),
             Token::Type(ref x) => write!(f, "{}", x),
             Token::Arrow => write!(f, "->"),
+            Token::LeftBracket => write!(f, "["),
+            Token::RightBracket => write!(f, "]"),
         }
     }
 }

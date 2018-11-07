@@ -13,9 +13,8 @@ pub use self::flat_variable::FlatVariable;
 
 use types::Signature;
 use std::fmt;
-use std::collections::{BTreeMap};
+use std::collections::{BTreeMap, HashMap};
 use field::Field;
-use substitution::Substitution;
 #[cfg(feature = "libsnark")]
 use standard;
 use helpers::{DirectiveStatement, Executable};
@@ -115,7 +114,7 @@ impl<T: Field> FlatFunction<T> {
                     }
                 },
                 FlatStatement::Directive(ref d) => {
-                    let input_values: Vec<T> = d.inputs.iter().map(|i| witness.get(i).unwrap().clone()).collect();
+                    let input_values: Vec<T> = d.inputs.iter().map(|i| i.solve(&mut witness)).collect();
                     match d.helper.execute(&input_values) {
                         Ok(res) => {
                             for (i, o) in d.outputs.iter().enumerate() {
@@ -188,8 +187,8 @@ pub enum FlatStatement<T: Field> {
     Return(FlatExpressionList<T>),
     Condition(FlatExpression<T>, FlatExpression<T>),
     Definition(FlatVariable, FlatExpression<T>),
-    Directive(DirectiveStatement),
     Assert(FlatExpression<T>),
+    Directive(DirectiveStatement<T>)
 }
 
 impl<T: Field> fmt::Display for FlatStatement<T> {
@@ -215,18 +214,18 @@ impl<T: Field> fmt::Debug for FlatStatement<T> {
 }
 
 impl<T: Field> FlatStatement<T> {
-    pub fn apply_recursive_substitution(self, substitution: &Substitution) -> FlatStatement<T> {
+    pub fn apply_recursive_substitution(self, substitution: &HashMap<FlatVariable, FlatVariable>) -> FlatStatement<T> {
         self.apply_substitution(substitution, true)
     }
 
-    pub fn apply_direct_substitution(self, substitution: &Substitution) -> FlatStatement<T> {
+    pub fn apply_direct_substitution(self, substitution: &HashMap<FlatVariable, FlatVariable>) -> FlatStatement<T> {
         self.apply_substitution(substitution, false)
     }
 
-    fn apply_substitution(self, substitution: &Substitution, should_fallback: bool) -> FlatStatement<T> {
+    fn apply_substitution(self, substitution: &HashMap<FlatVariable, FlatVariable>, should_fallback: bool) -> FlatStatement<T> {
         match self {
             FlatStatement::Definition(id, x) => FlatStatement::Definition(
-                id.apply_substitution(substitution, should_fallback), 
+                id.apply_substitution(substitution, should_fallback),
                 x.apply_substitution(substitution, should_fallback)
             ),
             FlatStatement::Return(x) => FlatStatement::Return(
@@ -239,8 +238,8 @@ impl<T: Field> FlatStatement<T> {
                 )
             },
             FlatStatement::Directive(d) => {
-                let outputs = d.outputs.into_iter().map(|o| substitution.get(&o).unwrap_or(o)).collect();
-                let inputs = d.inputs.into_iter().map(|i| substitution.get(&i).unwrap()).collect();
+                let outputs = d.outputs.into_iter().map(|o| o.apply_substitution(substitution, should_fallback)).collect();
+                let inputs = d.inputs.into_iter().map(|i| i.apply_substitution(substitution, should_fallback)).collect();
 
                 FlatStatement::Directive(
                     DirectiveStatement {
@@ -266,15 +265,15 @@ pub enum FlatExpression<T: Field> {
 }
 
 impl<T: Field> FlatExpression<T> {
-    pub fn apply_recursive_substitution(self, substitution: &Substitution) -> FlatExpression<T> {
+    pub fn apply_recursive_substitution(self, substitution: &HashMap<FlatVariable, FlatVariable>) -> FlatExpression<T> {
         self.apply_substitution(substitution, true)
     }
 
-    pub fn apply_direct_substitution(self, substitution: &Substitution) -> FlatExpression<T> {
+    pub fn apply_direct_substitution(self, substitution: &HashMap<FlatVariable, FlatVariable>) -> FlatExpression<T> {
         self.apply_substitution(substitution, false)
     }
 
-    fn apply_substitution(self, substitution: &Substitution, should_fallback: bool) -> FlatExpression<T> {
+    fn apply_substitution(self, substitution: &HashMap<FlatVariable, FlatVariable>, should_fallback: bool) -> FlatExpression<T> {
         match self {
             e @ FlatExpression::Number(_) => e,
             FlatExpression::Identifier(id) => FlatExpression::Identifier(id.apply_substitution(substitution, should_fallback)),
@@ -303,7 +302,7 @@ impl<T: Field> FlatExpression<T> {
             FlatExpression::Identifier(ref var) => {
                 match inputs.get(var) {
                     Some(v) => v.clone(),
-                    None => 
+                    None =>
                         panic!(
                             "Variable {:?} is undeclared in witness: {:?}",
                             var,
@@ -380,17 +379,17 @@ impl<T: Field> fmt::Display for FlatExpressionList<T> {
 }
 
 impl<T: Field> FlatExpressionList<T> {
-    fn apply_substitution(self, substitution: &Substitution, should_fallback: bool) -> FlatExpressionList<T> {
+    fn apply_substitution(self, substitution: &HashMap<FlatVariable, FlatVariable>, should_fallback: bool) -> FlatExpressionList<T> {
         FlatExpressionList {
             expressions: self.expressions.into_iter().map(|e| e.apply_substitution(substitution, should_fallback)).collect()
         }
     }
 
-    pub fn apply_recursive_substitution(self, substitution: &Substitution) -> FlatExpressionList<T> {
+    pub fn apply_recursive_substitution(self, substitution: &HashMap<FlatVariable, FlatVariable>) -> FlatExpressionList<T> {
         self.apply_substitution(substitution, true)
     }
 
-    pub fn apply_direct_substitution(self, substitution: &Substitution) -> FlatExpressionList<T> {
+    pub fn apply_direct_substitution(self, substitution: &HashMap<FlatVariable, FlatVariable>) -> FlatExpressionList<T> {
         self.apply_substitution(substitution, false)
     }
 }
