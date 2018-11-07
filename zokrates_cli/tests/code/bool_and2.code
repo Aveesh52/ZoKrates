@@ -1,0 +1,5 @@
+def main(field a, field b) -> (field):
+    field x = if a + 3 == 6 && b + 3 == 6 then 1 else 0
+    field y = if a < b && a > 6 then 0 else 1
+    field z = x + y
+    return z
