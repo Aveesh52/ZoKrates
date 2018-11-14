@@ -255,13 +255,12 @@ impl Checker {
 					false => Err( Error { message: format!("Expression of type {} cannot be assigned to {} of type {}", expression_type, var, var_type) }),
 				}
 			}
-			Statement::Condition(lhs, rhs) => {
-				let checked_lhs = self.check_expression(&lhs)?;
-				let checked_rhs = self.check_expression(&rhs)?;
+			Statement::Condition(expr) => {
+				let checked_expr = self.check_expression(&expr)?;
 
-				match (checked_lhs.clone(), checked_rhs.clone()) {
-					(ref r, ref l) if r.get_type() == l.get_type() => Ok(TypedStatement::Condition(checked_lhs, checked_rhs)),
-					(e1, e2) => Err( Error { message: format!("cannot compare {:?} to {:?}", e1.get_type(), e2.get_type()) })
+				match (checked_expr.clone()) {
+					(ref e) if e.get_type() == TypedExpression::Boolean(_) => Ok(TypedStatement::Condition(checked_expr)),
+					(err) => Err( Error { message: format!("is {:?} instead of Boolean", err.get_type()) })
 				}
 			}
 			Statement::For(ref var, ref from, ref to, ref statements) => {
