@@ -16,6 +16,7 @@ use std::fmt;
 use field::Field;
 use imports::Import;
 use flat_absy::*;
+use typed_absy::*;
 
 #[derive(Serialize, Deserialize, Clone, PartialEq)]
 pub struct Prog<T: Field> {
@@ -157,7 +158,7 @@ pub enum Statement<T: Field> {
     Return(ExpressionList<T>),
     Declaration(Variable),
     Definition(Assignee<T>, Expression<T>),
-    Condition(Expression<T>, Expression<T>),
+    Condition(BooleanExpression<T>),
     For(Variable, T, T, Vec<Statement<T>>),
     MultipleDefinition(Vec<Assignee<T>>, Expression<T>),
 }

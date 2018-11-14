@@ -168,7 +168,7 @@ pub enum TypedStatement<T: Field> {
     Return(Vec<TypedExpression<T>>),
     Definition(TypedAssignee<T>, TypedExpression<T>),
     Declaration(Variable),
-    Condition(TypedExpression<T>, TypedExpression<T>),
+    Condition(TypedExpression<T>),
     For(Variable, T, T, Vec<TypedStatement<T>>),
     MultipleDefinition(Vec<Variable>, TypedExpressionList<T>),
     Assert(TypedExpression<T>),
@@ -203,6 +203,9 @@ impl<T: Field> fmt::Debug for TypedStatement<T> {
             }
             TypedStatement::MultipleDefinition(ref lhs, ref rhs) => {
                 write!(f, "MultipleDefinition({:?}, {:?})", lhs, rhs)
+            },
+            TypedStatement::Assert(ref exprs) => {
+                write!(f, "Assert({:?})", exprs)
             },
         }
     }
@@ -348,7 +351,6 @@ pub enum FieldElementExpression<T: Field> {
     Pow(Box<FieldElementExpression<T>>, Box<FieldElementExpression<T>>),
     IfElse(Box<BooleanExpression<T>>, Box<FieldElementExpression<T>>, Box<FieldElementExpression<T>>),
     FunctionCall(String, Vec<TypedExpression<T>>),
-    Assert(Box<BooleanExpression<T>>)
     Select(Box<FieldElementArrayExpression<T>>, Box<FieldElementExpression<T>>),
 }
 
