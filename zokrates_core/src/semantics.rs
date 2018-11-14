@@ -259,8 +259,8 @@ impl Checker {
 				let checked_expr = self.check_expression(&expr)?;
 
 				match checked_expr.clone() {
-					(ref e) if e.get_type() == TypedExpression::Boolean => Ok(TypedStatement::Condition(checked_expr)),
-					(err) => Err( Error { message: format!("is {:?} instead of Boolean", err.get_type()) })
+					ref e if e.get_type() == TypedExpression::Boolean => Ok(TypedStatement::Condition(checked_expr)),
+					err => Err( Error { message: format!("is {:?} instead of Boolean", err.get_type()) })
 				}
 			}
 			Statement::For(ref var, ref from, ref to, ref statements) => {
