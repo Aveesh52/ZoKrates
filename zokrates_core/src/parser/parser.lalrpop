@@ -5,36 +5,20 @@ use imports::Import;
 
 grammar<T> where T : Field;
 
-// Define some helper macros (built-ins don't work, see lalrpop #417)
-
-Cat<E1, E2> = <E1> E2;
-
-Opt<E> : Option<E> = {
-"" => None,
-E => Some(<>)
-}
-
-Star<E> : Vec<E> = {
-<v: Star<E>> <e: E> => {let mut v = v; v.push(e); v},
-"" => vec![]
-}
-
-Plus<E> : Vec<E> = {
-  <v: Star<E>> <e: E> => { let mut v = v; v.push(e); v},
-  E => vec![<>]
-}
-
-SepList<E, S> : Vec<E> = <v:Star<Cat<E,S>>> <e:Opt<E>> => {
-    match e {
-        None => v,
-        Some(e) => {
-            let mut v = v;
-            v.push(e);
-            v
+// SepList<E, S, final> is a list of <E> separated by <S>, with a final separator either
+// present ("true"), absent ("false"), or optional ("opt")
+SepList<E, S, TrailingSep> : Vec<E> = {
+    "" => vec![],
+    <(<E> S)*> if TrailingSep == "true",
+    <v : (<E> S)*> <e : E> if TrailingSep == "false" => { let mut v = v; v.push(e); v},
+    <v : (<E> S)*> <e : E?> if TrailingSep == "opt" => {
+        let mut v = v;
+        match e {
+            None => v,
+            Some e => {v.push(e); v},
         }
     }
-};
-
+}
 // Basic terminals
 
 Ide : String = <s:r"[a-zA-Z][a-zA-Z0-9]*"> => s.to_string();
@@ -77,11 +61,11 @@ BoolExpr : Expression<T> = {
     <BoolTerm>
 }
 
-IfElse: Expression<T>  = "if" <a:BoolExpr> "then" <b:Expr> "else" <c:Expr> "fi"
-                       => Expression::IfElse(box a, box b, box c);
+IfElse : Expression<T>  = "if" <a:BoolExpr> "then" <b:Expr> "else" <c:Expr> "fi"
+    => Expression::IfElse(box a, box b, box c);
 
-FunctionCall : Expression<T> = <f:Ide> "(" <args:SepList<Expr, ",">> ")"
-                             => Expression::FunctionCall(f, args);
+FunctionCall : Expression<T> = <f:Ide> "(" <args:SepList<Expr, ",", "false">> ")"
+    => Expression::FunctionCall(f, args);
 
 Expr : Expression<T> = {
     <a:Expr>"+"<b:Term> => Expression::Add(box a, box b),
@@ -94,63 +78,63 @@ Expr : Expression<T> = {
 // Statement Grammar
 
 Type : Type = {
-     "field" => Type::FieldElement,
-     "bool" => Type::Boolean
+    "field" => Type::FieldElement,
+    "bool" => Type::Boolean
 }
 
 Definition : Vec<Statement<T>> = <x:Ide> "=" <e:Expr> => vec![Statement::Definition(x, e)];
 
 Declaration : Vec<Statement<T>> = <t:Type> <x:Ide> "=" <e:Expr>
-                                => vec![Statement::Declaration(Variable::new(x.clone(), t)),
-                                        Statement::Definition(x, e)];
+    => vec![Statement::Declaration(Variable::new(x.clone(), t)),
+            Statement::Definition(x, e)];
 
 ForLoop : Vec<Statement<T>> = "for" <t:Type> <i:Ide> "in" <n1:Num> ".." <n2:Num> "do"
-                                  <s:SepList<Statement, ";">>
-                              "endfor"
-                            => vec![Statement::For(Variable::new(i, t), n1, n2, s.into_iter().flatten().collect())];
+    <s:SepList<Statement, ";", "true">>
+    "endfor"
+    => vec![Statement::For(Variable::new(i, t), n1, n2, s.into_iter().flatten().collect())];
 
 Comment : Vec<Statement<T>> = r"//.*" => vec![];
 
 Statement : Vec<Statement<T>> = {
-   <Expr> "==" <Expr> => vec![Statement::Condition(<>)],
-   Definition,
-   Declaration,
-   ForLoop,
-   <Statement> Comment,
+    <Expr> "==" <Expr> => vec![Statement::Condition(<>)],
+    Definition,
+    Declaration,
+    ForLoop,
+    <Statement> Comment,
 }
 
 // Function grammar
 
-ExpressionList : ExpressionList<T> = SepList<Expr, ","> => ExpressionList{expressions: <>};
+ExpressionList : ExpressionList<T> = SepList<Expr, ",", "false"> => ExpressionList{expressions: <>};
 
 Return : Vec<Statement<T>> = "return" <ExpressionList> => vec![Statement::Return(<>)];
 
-FunctionArg : Parameter = <p:Opt<"private">> <t:Type> <x:Ide>
-                        => Parameter{id : Variable::new(x, t), private: p.is_some()};
+FunctionArg : Parameter = <p:"private"?> <t:Type> <x:Ide>
+    => Parameter{id : Variable::new(x, t), private: p.is_some()};
 
-FunctionHeader : (String, Vec<Parameter>, Signature) = "def" <f:Ide> "(" <args:SepList<FunctionArg, ",">> ")"
-                                                       "->" "(" <rets:SepList<Type, ",">> ")"
- => (f, args.clone(), Signature{inputs : args.into_iter().map(|a| a.id.get_type()).collect(), outputs: rets});
+FunctionHeader : (String, Vec<Parameter>, Signature) = "def" <f:Ide> "(" <args:SepList<FunctionArg, ",", "false">> ")"
+    "->" "(" <rets:SepList<Type, ",", "false">> ")"
+    => (f, args.clone(), Signature{inputs : args.into_iter().map(|a| a.id.get_type()).collect(), outputs: rets});
 
-Function : Function<T> = <h:FunctionHeader> <s:SepList<Statement, ";">> <r:Return>
-                           => {let (id, args, sig) = h;
-                               let mut s = s;
-                               s.push(r);
-                               Function{id: id,
-                                        arguments: args,
-                                        statements: s.into_iter().flatten().collect(),
-                                        signature: sig}
-                               };
+Function : Function<T> = <h:FunctionHeader> <s:SepList<Statement, ";", "true">> <r:Return>
+    => {let (id, args, sig) = h;
+        let mut s = s;
+        s.push(r);
+        Function{id: id,
+                 arguments: args,
+                 statements: s.into_iter().flatten().collect(),
+                 signature: sig}
+    };
 
 // Program grammar
 
 As : String = "as" <Ide>;
 
-Import : Import = "import" <p:r#""([\.\w/]*)""#> <i:Opt<As>>
-                => match i {
-                            None => Import::new(p.to_string()),
-                            Some(alias) => Import::new_with_alias(p.to_string(), &alias)
-                            };
+Import : Import = "import" <p:r#""([\.\w/]*)""#> <i:As?>
+    => match i {
+        None => Import::new(p.to_string()),
+        Some(alias) => Import::new_with_alias(p.to_string(), &alias)
+    };
 
-pub Program : Prog<T> = <imports:Star<Import>> <functions:Star<Function>>
-                      => Prog{functions, imports, imported_functions: vec![]};
+pub Program : Prog<T> = <imports:Import*> <functions:Function*>
+    => Prog{functions, imports, imported_functions: vec![]};
